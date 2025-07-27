@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+   
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="#">Quiz Master</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="{{url_for('admin.dashboard')}}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.quiz_management') }}">Quiz</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.view_scores') }}">Scores</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout')}}">Logout</a></li>
+                </ul>
+                <form class="d-flex">
+                    <input class="form-control me-2" type="search" placeholder="Search" id="searchInput">
+                    
+                </form>
+                <span class="text-white ms-3 fw-bold">Welcome, Admin</span>
+            </div>
+        </div>
+    </nav>
+
+    
+    <div class="container mt-5">
+    <h3 class="text-center fw-bold">Quiz Management</h3>
+    <div class="text-center mt-3">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addQuizModal">Add Quiz</button>
+    </div>
+
+
+    <div class="row mt-4" id="quizContainer">
+        
+    </div>
+</div>
+
+
+    <div class="modal fade" id="addQuizModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">New Quiz</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="quizForm">
+                        <div class="mb-3">
+                            <label class="form-label">Subject:</label>
+                            <select class="form-control" id="subjectSelect" required>
+                                <option value="">Select Subject</option>
+                                {% for subject in subjects %}
+                                    <option value="{{ subject.id }}">{{ subject.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Chapter:</label>
+                            <select class="form-control" id="chapterSelect" required>
+                                <option value="">Select Chapter</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date:</label>
+                            <input type="date" class="form-control" id="quizDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Duration (hh:mm):</label>
+                            <input type="time" class="form-control" id="quizDuration" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="saveQuiz">Save</button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="modal fade" id="addQuestionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Add Question</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="questionForm">
+                    <input type="hidden" id="quizId"> 
+
+                    <div class="mb-3">
+                        
+                        <input type="hidden" class="form-control"  id="chapterId" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Question Title:</label>
+                        <input type="text" class="form-control" id="questionTitle" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Question Statement:</label>
+                        <textarea class="form-control" id="questionStatement" rows="3" required></textarea>
+                    </div>
+
+                    <h5 class="text-center mt-3">Single Option Correct</h5>
+
+                    <div class="mb-3">
+                        <label class="form-label">Option 1:</label>
+                        <input type="text" class="form-control" id="option1" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Option 2:</label>
+                        <input type="text" class="form-control" id="option2" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Option 3:</label>
+                        <input type="text" class="form-control" id="option3" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Option 4:</label>
+                        <input type="text" class="form-control" id="option4" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Correct Option:</label>
+                        <select class="form-control" id="correctOption">
+                            <option value="1">Option 1</option>
+                            <option value="2">Option 2</option>
+                            <option value="3">Option 3</option>
+                            <option value="4">Option 4</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" id="saveNextQuestion">Save & Next</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const subjectSelect = document.getElementById("subjectSelect");
+    const chapterSelect = document.getElementById("chapterSelect");
+    const saveQuizBtn = document.getElementById("saveQuiz");
+    const quizContainer = document.getElementById("quizContainer");
+    const saveNextQuestionBtn = document.getElementById("saveNextQuestion");
+    console.log("save",saveNextQuestionBtn)
+
+    
+    fetchSubjects();
+    fetchQuizzes();
+
+    function fetchSubjects() {
+        fetch("/admin/get_subjects")
+            .then(response => response.json())
+            .then(data => {
+                subjectSelect.innerHTML = "<option value=''>Select Subject</option>";
+                data.forEach(subject => {
+                    let option = document.createElement("option");
+                    option.value = subject.id;
+                    option.textContent = subject.name;
+                    subjectSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error("Error loading subjects:", error));
+    }
+
+    
+    subjectSelect.addEventListener("change", function () {
+        let subjectId = this.value;
+        chapterSelect.innerHTML = "<option value=''>Select Chapter</option>";
+
+        if (subjectId) {
+            fetch(`/admin/get_chapters/${subjectId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(chapter => {
+                        let option = document.createElement("option");
+                        option.value = chapter.id;
+                        option.textContent = chapter.name;
+                        chapterSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error("Error loading chapters:", error));
+        }
+    });
+
+    
+    function fetchQuizzes() {
+        fetch("/admin/get_quizzes")
+            .then(response => response.json())
+            .then(data => {
+                quizContainer.innerHTML = ""; 
+                data.forEach(quiz => addQuizCard(quiz));
+            })
+            .catch(error => console.error("Error loading quizzes:", error));
+    }
+
+    
+    saveQuizBtn.addEventListener("click", function () {
+        let subjectId = subjectSelect.value;
+        let subjectName = subjectSelect.options[subjectSelect.selectedIndex]?.text || "";
+        let chapterId = chapterSelect.value;
+        let quizDate = document.getElementById("quizDate").value;
+        let quizDuration = document.getElementById("quizDuration").value;
+
+        if (!subjectId || !chapterId || !quizDate || !quizDuration) {
+            alert("All fields are required!");
+            return;
+        }
+
+        
+        fetch("/admin/add_quiz", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                chapter_id: chapterId,
+                date_of_quiz: quizDate,
+                time_duration: quizDuration
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                document.querySelector(".btn-close").click();  
+
+                
+                addQuizCard({
+                    id: data.quiz_id,
+                    subject_name: subjectName
+                });
+
+            } else {
+                alert("Error adding quiz.");
+            }
+        })
+        .catch(error => console.error("Error adding quiz:", error));
+    });
+
+    
+    function addQuizCard(quiz) {
+         if (quiz.subject_name === "Unknown Subject") {
+        return; 
+    }
+    let quizCard = document.createElement("div");
+    quizCard.className = "col-md-6 mt-3";
+    quizCard.innerHTML = `
+        <div class="card shadow-lg border-0">
+            <div class="card-body">
+                <button class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 deleteQuizBtn" 
+                        data-quiz-id="${quiz.id}" title="Delete Quiz">
+                    X
+                </button>
+                <h5 class="fw-bold text-center">${quiz.subject_name}</h5>
+                <table class="table table-bordered mt-3">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>ID</th>
+                            <th>Quiz Title</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quizTable-${quiz.id}">
+                        <!-- Quiz rows will be added dynamically here -->
+                    </tbody>
+                </table>
+                <button class="btn btn-success btn-sm mt-2 addQuestionBtn"
+                        data-quiz-id="${quiz.id}">
+                    + Question
+                </button>
+            </div>
+        </div>
+    `;
+    quizContainer.appendChild(quizCard);
+
+    
+    fetchQuestions(quiz.id);
+}
+
+});
+
+quizContainer.addEventListener("click", function (event) {
+        if (event.target.classList.contains("addQuestionBtn")) {
+            let quizId = event.target.getAttribute("data-quiz-id");
+
+            
+            document.getElementById("quizId").value = quizId;
+            document.getElementById("chapterId").value = quizId; 
+
+            
+            let questionModal = new bootstrap.Modal(document.getElementById("addQuestionModal"));
+            questionModal.show();
+        }
+    });
+    let saveNextQuestionBtn = document.getElementById("saveNextQuestion");
+    
+    saveNextQuestionBtn.addEventListener("click", function () {
+        let quizId = document.getElementById("quizId").value;
+    let chapterId = document.getElementById("chapterId").value;
+    let questionTitle = document.getElementById("questionTitle").value;
+    let questionStatement = document.getElementById("questionStatement").value;
+    let option1 = document.getElementById("option1").value;
+    let option2 = document.getElementById("option2").value;
+    let option3 = document.getElementById("option3").value;
+    let option4 = document.getElementById("option4").value;
+    let correctOption = document.getElementById("correctOption").value;
+
+    let editingQuestionId = this.getAttribute("data-editing");
+
+    if (!questionTitle || !questionStatement || !option1 || !option2 || !option3 || !option4) {
+        alert("All fields are required!");
+        return;
+    }
+
+    let apiUrl = editingQuestionId ? `/admin/update_question/${editingQuestionId}` : "/admin/add_question";
+    let method = editingQuestionId ? "PUT" : "POST";
+
+    fetch(apiUrl, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            quiz_id: quizId,
+            chapter_id: chapterId,
+            question_title: questionTitle,
+            question_statement: questionStatement,
+            option1: option1,
+            option2: option2,
+            option3: option3,
+            option4: option4,
+            correct_option: correctOption
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            fetchQuestions(quizId);  
+
+            
+            document.getElementById("questionForm").reset();
+            document.getElementById("saveNextQuestion").textContent = "Save & Next";
+            document.getElementById("saveNextQuestion").removeAttribute("data-editing");
+
+            let modalElement = document.getElementById("addQuestionModal");
+            let modalInstance = bootstrap.Modal.getInstance(modalElement);
+            modalInstance.hide(); 
+        } else {
+            alert("Error processing request.");
+        }
+    })
+    .catch(error => console.error("Error saving/updating question:", error));
+
+});
+
+
+    function fetchQuestions(quizId) {
+    fetch(`/admin/get_questions/${quizId}`)
+        .then(response => response.json())
+        .then(data => {
+            let questionTable = document.getElementById(`quizTable-${quizId}`);
+            questionTable.innerHTML = ""; 
+
+            data.forEach(question => {
+                let newRow = document.createElement("tr");
+                newRow.innerHTML = `
+                    <td>${question.id}</td>
+                    <td>${question.question_title}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm editQuestion" data-question-id="${question.id}" data-quiz-id="${quizId}">
+                            Edit
+                        </button>
+                        <button class="btn btn-danger btn-sm deleteQuestion" data-question-id="${question.id}">
+                            Delete
+                        </button>
+                    </td>
+                `;
+                questionTable.appendChild(newRow);
+            });
+        })
+        .catch(error => console.error("Error loading questions:", error));
+}
+
+
+document.addEventListener("click", function (event) {
+    if (event.target.classList.contains("deleteQuestion")) {
+        let questionId = event.target.getAttribute("data-question-id");
+        deleteQuestion(questionId);
+    } else if (event.target.classList.contains("editQuestion")) {
+        let questionId = event.target.getAttribute("data-question-id");
+        let quizId = event.target.getAttribute("data-quiz-id");
+        editQuestion(questionId, quizId);
+    }
+    if (event.target.classList.contains("deleteQuizBtn")) {
+    console.log("delete is clicked!!!!!!")
+    const quizId = event.target.getAttribute("data-quiz-id");
+
+    if (confirm("Are you sure you want to delete this quiz?")) {
+        fetch(`/admin/delete_quiz/${quizId}`, {
+            method: "DELETE"
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data)
+            if (data.status === "success") {
+                alert("Quiz deleted successfully!");
+                window.location.reload();  // ✅ Reload the page
+            } else {
+                alert("Error deleting quiz.");
+            }
+        })
+        .catch(error => console.error("Error deleting quiz:", error));
+    }
+}
+
+});
+
+function deleteQuestion(questionId) {
+    if (confirm("Are you sure you want to delete this question?")) {
+            fetch(`/admin/delete_question/${questionId}`, {
+                method: "DELETE",
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    alert("Question deleted successfully!");
+                    location.reload()
+                } else {
+                    alert("Error deleting question.");
+                }
+            })
+            .catch(error => console.error("Error deleting question:", error));
+    }
+}
+
+function editQuestion(questionId, quizId) {
+    console.log("Fetching question with ID:", questionId);
+
+    fetch(`/admin/get_question/${questionId}`)
+        .then(response => response.json())
+        .then(question => {
+            if (question.error) {
+                console.error("Error:", question.error);
+                return;
+            }
+
+            
+            document.getElementById("quizId").value = quizId;
+            document.getElementById("chapterId").value = question.chapter_id || ''; 
+            document.getElementById("questionTitle").value = question.question_title;
+            document.getElementById("questionStatement").value = question.question_statement;
+            document.getElementById("option1").value = question.option1;
+            document.getElementById("option2").value = question.option2;
+            document.getElementById("option3").value = question.option3;
+            document.getElementById("option4").value = question.option4;
+            document.getElementById("correctOption").value = question.correct_option;
+
+            
+            let saveNextButton = document.getElementById("saveNextQuestion");
+            saveNextButton.textContent = "Update";
+            saveNextButton.setAttribute("data-editing", questionId);
+
+            
+            let questionModal = new bootstrap.Modal(document.getElementById("addQuestionModal"));
+            questionModal.show();
+        })
+        .catch(error => console.error("Error fetching question details:", error));
+}
+
+
+
+document.getElementById("saveNextQuestion").addEventListener("click", function () {
+    let questionId = this.getAttribute("data-editing");
+
+    if (!questionId) {
+        console.error("No question ID found for updating.");
+        return;
+    }
+
+    
+    let updatedQuestion = {
+        question_title: document.getElementById("questionTitle").value,
+        question_statement: document.getElementById("questionStatement").value,
+        option1: document.getElementById("option1").value,
+        option2: document.getElementById("option2").value,
+        option3: document.getElementById("option3").value,
+        option4: document.getElementById("option4").value,
+        correct_option: document.getElementById("correctOption").value
+    };
+
+    
+    fetch(`/admin/update_question/${questionId}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(updatedQuestion)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert("Question updated successfully!");
+            location.reload();  
+        } else {
+            alert("Error updating question: " + data.error);
+        }
+    })
+    .catch(error => console.error("Error updating question:", error));
+});
+
+document.getElementById("searchInput").addEventListener("input", function () {
+    let searchValue = this.value.toLowerCase();
+    console.log(searchValue)
+
+    document.querySelectorAll("#quizContainer .card").forEach(card => {
+        let quizTitle = card.querySelector("h5").textContent.toLowerCase();
+        card.style.display = quizTitle.includes(searchValue) ? "block" : "none";
+    });
+
+
+    document.querySelectorAll("#subjectSelect option").forEach(option => {
+        let subjectName = option.textContent.toLowerCase();
+        option.style.display = subjectName.includes(searchValue) || searchValue === "" ? "block" : "none";
+    });
+});
+
+document.getElementById("searchInput").addEventListener("click", function () {
+    let searchValue = this.value.toLowerCase();
+
+    
+    document.querySelectorAll("#quizContainer .card").forEach(card => {
+        let quizTitle = card.querySelector("h5").textContent.toLowerCase();
+        if (quizTitle.includes(searchValue)) {
+            card.style.display = "block";
+        } else {
+            card.style.display = "none";
+        }
+    });
+
+    
+    document.querySelectorAll("#subjectSelect option").forEach(option => {
+        let subjectName = option.textContent.toLowerCase();
+        if (subjectName.includes(searchValue) || searchValue === "") {
+            option.style.display = "block";
+        } else {
+            option.style.display = "none";
+        }
+    });
+});
+
+
+
+    </script>
+    
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

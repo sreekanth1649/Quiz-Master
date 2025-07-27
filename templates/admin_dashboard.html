@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="#">Quiz Master</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.quiz_management') }}">Quiz</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.view_scores') }}">Scores</a></li>
+                
+                    <li class="nav-item"><a class="nav-link" href="{{url_for('auth.logout')}}">Logout</a></li>
+                </ul>
+                <input class="form-control me-2" type="search" style="width:200px;" placeholder="Search" id="searchInput">
+
+                <span class="text-white ms-3 fw-bold">Welcome, Admin</span>
+            </div>
+        </div>
+    </nav>
+
+    
+
+    
+
+<div class="container mt-5">
+    <h3 class="text-center fw-bold">Admin Dashboard</h3>
+
+    <div class="row mt-4 justify-content-center" id="subjectContainer">
+    {% for subject in subjects %}
+    <div class="col-md-4 mt-3">
+        
+        <div class="card shadow-lg border-0 text-center">
+            <div class="d-flex justify-content-end">
+    <button class="btn btn-sm btn-danger deleteSubjectBtn" data-id="{{ subject.id }}" title="Delete Subject">
+        <i class="fas fa-times"></i>
+        X
+    </button>
+</div>
+
+            <div class="card-body">
+                <h5 class="fw-bold subject">{{ subject.name }}</h5>
+                
+                <table class="table table-bordered table-sm text-center mt-3 quizTable">
+    <thead class="table-primary">
+        <tr>
+            <th style="padding: 5px; font-size: 12px;">Chapter Name</th>
+            <th style="padding: 5px; font-size: 12px;">No. of Questions</th>
+            <th style="padding: 5px; font-size: 12px;">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for chapter in chapters if chapter.subject_id == subject.id %}
+        <tr id="chapter-{{ chapter.id }}">
+            <td class="chapter" style="padding: 5px; font-size: 12px;">{{ chapter.name }}</td>
+            <td style="padding: 5px; font-size: 12px;">{{ chapter.no_of_questions }}</td>
+            <td style="padding: 5px; font-size: 12px;">
+                <button class="btn btn-warning btn-sm editChapterBtn" 
+                        data-id="{{ chapter.id }}" 
+                        data-name="{{ chapter.name }}" 
+                        data-questions="{{ chapter.no_of_questions }}" 
+                        data-subject="{{ subject.id }}" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#editChapterModal">
+                    Edit
+                </button> / 
+                <button class="btn btn-danger btn-sm deleteChapterBtn" 
+                        data-id="{{ chapter.id }}">
+                    Delete
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<button class="btn btn-sm btn-pink mt-2 addChapterBtn" 
+                        data-subject="{{ subject.id }}" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#addChapterModal">
+                    + Chapter
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+</div>
+
+    <div class="text-center mt-4">
+        <a href="#" class="fw-bold text-primary" data-bs-toggle="modal" data-bs-target="#addSubjectModal">+ Add Subject</a>
+    </div>
+</div>
+
+<div class="modal fade" id="addSubjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">New Subject</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="subjectForm">
+                    <div class="mb-3">
+                        <label class="form-label">Subject Name:</label>
+                        <input type="text" class="form-control" id="subjectName" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="saveSubject">Save</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addChapterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">New Chapter</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="chapterForm">
+                    <input type="hidden" id="subjectId">
+                    <div class="mb-3">
+                        <label class="form-label">Chapter Name:</label>
+                        <input type="text" class="form-control" id="chapterName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">No. of Questions:</label>
+                        <input type="number" class="form-control" id="noOfQuestions" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="saveChapter">Save</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editChapterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title">Edit Chapter</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editChapterForm">
+                    <input type="hidden" id="editChapterId">
+                    <div class="mb-3">
+                        <label class="form-label">Chapter Name:</label>
+                        <input type="text" class="form-control" id="editChapterName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">No. of Questions:</label>
+                        <input type="number" class="form-control" id="editNoOfQuestions" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="updateChapter">Save</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("saveSubject").addEventListener("click", function () {
+        let name = document.getElementById("subjectName").value.trim();
+
+        if (!name) {
+            alert("Subject name is required!");
+            return;
+        }
+
+        fetch("/admin/add_subject", {
+            method: "POST",
+            body: new URLSearchParams({ name }),
+            headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                let subjectContainer = document.getElementById("subjectContainer");
+                let newCard = document.createElement("div");
+                newCard.className = "col-md-4 mt-3";
+                newCard.innerHTML = `
+                    <div class="card shadow-lg border-0 text-center">
+                        <div class="card-body">
+                            <h5 class="fw-bold">${data.name}</h5>
+                            <table class="table table-bordered mt-3">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th>Chapter Name</th>
+                                        <th>No. of Questions</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="chapterList-${data.id}">
+                                </tbody>
+                            </table>
+                            <button class="btn btn-sm btn-pink mt-2 addChapterBtn" data-subject="${data.id}" data-bs-toggle="modal" data-bs-target="#addChapterModal">
+                                + Chapter
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                subjectContainer.appendChild(newCard);
+                document.getElementById("subjectName").value = "";
+                bootstrap.Modal.getInstance(document.getElementById("addSubjectModal")).hide();
+                window.location.reload();
+            } else {
+                alert(data.message);
+            }
+        });
+    });
+
+    document.querySelectorAll(".addChapterBtn").forEach(button => {
+        button.addEventListener("click", function () {
+            document.getElementById("subjectId").value = this.getAttribute("data-subject");
+        });
+    });
+
+document.getElementById("saveChapter").addEventListener("click", function () {
+    let subjectId = document.getElementById("subjectId").value.trim();
+    let name = document.getElementById("chapterName").value.trim();
+    let noOfQuestions = document.getElementById("noOfQuestions").value;
+
+    if (!subjectId || !name || !noOfQuestions) {
+        alert("Please fill all fields!");
+        return;
+    }
+
+    fetch("/admin/add_chapter", {
+        method: "POST",
+        body: new URLSearchParams({ subject_id: subjectId, name: name, no_of_questions: noOfQuestions }),
+        headers: { "Content-Type": "application/x-www-form-urlencoded" }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            let modalElement = document.getElementById("addChapterModal");
+            let modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+            modalInstance.hide();
+
+            setTimeout(() => location.reload(), 500);
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => console.error("Error:", error));
+});
+
+document.getElementById("searchInput").addEventListener("input", function () {
+    let searchValue = this.value.toLowerCase();
+    console.log("Searching for:", searchValue);
+
+    document.querySelectorAll("#subjectContainer .col-md-4").forEach(subjectCard => {
+        let subjectName = subjectCard.querySelector("h5").textContent.toLowerCase();
+        let hasMatchingChapter = false;
+
+        
+        subjectCard.querySelectorAll("tbody tr").forEach(chapterRow => {
+            let chapterName = chapterRow.querySelector(".chapter").textContent.toLowerCase();
+            if (subjectName.includes(searchValue) || chapterName.includes(searchValue)) {
+                chapterRow.style.display = ""; 
+                hasMatchingChapter = true;
+            } else {
+                chapterRow.style.display = "none"; 
+            }
+        });
+
+        
+        subjectCard.style.display = hasMatchingChapter || subjectName.includes(searchValue) ? "block" : "none";
+    });
+});
+
+
+
+
+
+    function attachEventListeners() {
+        document.querySelectorAll(".editChapterBtn").forEach(button => {
+            button.addEventListener("click", function () {
+                let chapterId = this.getAttribute("data-id");
+                let chapterName = this.getAttribute("data-name");
+                let noOfQuestions = this.getAttribute("data-questions");
+
+                document.getElementById("editChapterId").value = chapterId;
+                document.getElementById("editChapterName").value = chapterName;
+                document.getElementById("editNoOfQuestions").value = noOfQuestions;
+            });
+        });
+
+        document.querySelectorAll(".deleteChapterBtn").forEach(button => {
+            button.addEventListener("click", function () {
+                let chapterId = this.getAttribute("data-id");
+
+                if (confirm("Are you sure you want to delete this chapter?")) {
+                    fetch("/admin/delete_chapter", {
+                        method: "POST",
+                        body: new URLSearchParams({ id: chapterId }),
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            document.querySelector(`#chapter-${chapterId}`).remove();
+                        } else {
+                            alert(data.message);
+                        }
+                    });
+                }
+            });
+        });
+    }
+
+    attachEventListeners();
+
+    document.getElementById("updateChapter").addEventListener("click", function () {
+        let chapterId = document.getElementById("editChapterId").value;
+        let name = document.getElementById("editChapterName").value.trim();
+        let noOfQuestions = document.getElementById("editNoOfQuestions").value.trim();
+
+        if (!name || !noOfQuestions) {
+            alert("Please fill all fields!");
+            return;
+        }
+
+        fetch("/admin/update_chapter", {
+            method: "POST",
+            body: new URLSearchParams({ id: chapterId, name: name, no_of_questions: noOfQuestions }),
+            headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                let row = document.querySelector(`#chapter-${chapterId}`);
+                if (row) {
+                    row.cells[0].innerText = name;
+                    row.cells[1].innerText = noOfQuestions;
+                }
+                bootstrap.Modal.getInstance(document.getElementById("editChapterModal")).hide();
+            } else {
+                alert(data.message);
+            }
+        });
+    });
+});
+
+document.querySelectorAll(".deleteSubjectBtn").forEach(button => {
+    button.addEventListener("click", function () {
+        let subjectId = this.getAttribute("data-id");
+
+        if (confirm("Are you sure you want to delete this subject and all its chapters?")) {
+            fetch("/admin/delete_subject", {
+                method: "POST",
+                body: new URLSearchParams({ id: subjectId }),
+                headers: { "Content-Type": "application/x-www-form-urlencoded" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    this.closest(".col-md-4").remove();
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+    });
+});
+
+
+
+</script>
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
