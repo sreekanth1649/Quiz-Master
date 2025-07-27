@@ -1,8 +1,8 @@
-# Quiz Master V1 - Modern Application Development I (Jan 2025)
+# Quiz Master - Modern Application Development I (Jan 2025)
 
 ## 📘 Project Overview
 
-**Quiz Master V1** is a multi-user web application developed as part of the *Modern Application Development I* course. It functions as an exam preparation platform where users can take quizzes on various subjects and chapters. The application supports two user roles: **Admin (Quiz Master)** and **Users**. Admin has complete control over the subjects, chapters, quizzes, and user management, while users can register, log in, and attempt quizzes of their choice.
+**Quiz Master ** is a multi-user web application developed as part of the *Modern Application Development I* course. It functions as an exam preparation platform where users can take quizzes on various subjects and chapters. The application supports two user roles: **Admin (Quiz Master)** and **Users**. Admin has complete control over the subjects, chapters, quizzes, and user management, while users can register, log in, and attempt quizzes of their choice.
 
 ---
 
